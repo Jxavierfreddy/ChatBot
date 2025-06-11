@@ -1,19 +1,47 @@
 (function () {
+  // Basic UI
   document.body.innerHTML = `
-    <div style="padding:10px;font-family:sans-serif">
-      <h3>Chatbot</h3>
-      <input id="chatInput" placeholder="Ask me..." style="width:80%" />
-      <button onclick="send()">Send</button>
-      <pre id="chatLog"></pre>
+    <div style="font-family:sans-serif; padding:10px; max-width:600px;">
+      <h3>Business Central Chatbot</h3>
+      <textarea id="chatLog" style="width:100%; height:300px;" readonly></textarea><br/>
+      <input id="chatInput" type="text" style="width:80%;" placeholder="Ask me about AL functionality..." />
+      <button id="sendBtn" style="width:18%;">Send</button>
     </div>
   `;
 
-  window.send = function () {
-    const input = document.getElementById("chatInput").value;
-    const log = document.getElementById("chatLog");
-    log.textContent += "\nYou: " + input;
+  const chatLog = document.getElementById("chatLog");
+  const chatInput = document.getElementById("chatInput");
+  const sendBtn = document.getElementById("sendBtn");
 
-    // Example reply (replace with backend call)
-    log.textContent += "\nBot: I'm a dummy bot. You said: " + input;
-  };
+  async function send() {
+    const question = chatInput.value.trim();
+    if (!question) return;
+    chatLog.value += "\nYou: " + question;
+    chatInput.value = "";
+
+    try {
+      const response = await fetch("https://your-backend-domain.com/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question }),
+      });
+      if (!response.ok) {
+        chatLog.value += "\nBot: Sorry, I cannot answer right now.";
+        return;
+      }
+      const data = await response.json();
+      chatLog.value += "\nBot: " + data.answer;
+      chatLog.scrollTop = chatLog.scrollHeight;
+    } catch (err) {
+      chatLog.value += "\nBot: Error contacting backend.";
+    }
+  }
+
+  sendBtn.addEventListener("click", send);
+  chatInput.addEventListener("keypress", function (e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      send();
+    }
+  });
 })();
